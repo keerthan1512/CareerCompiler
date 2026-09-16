@@ -81,3 +81,56 @@ def task_analyze_job(self, job_id: str, user_id: str):
 
     asyncio.run(_analyze())
     return {"status": "complete", "job_id": job_id}
+
+
+@celery_app.task(name="src.tasks.generate_tailoring_plan", bind=True, max_retries=3)
+def task_generate_tailoring_plan(self, plan_id: str):
+    """
+    Background task to run the matching engine and generate a tailoring plan.
+    """
+    import asyncio
+    from src.database import AsyncSessionLocal
+    from src.models import TailoringPlan, CanonicalProfile, JobDescription
+    from career_compiler_matching_engine.engine import MatchingEngine
+    
+    async def _generate():
+        async with AsyncSessionLocal() as session:
+            plan = await session.get(TailoringPlan, plan_id)
+            if not plan:
+                return
+            
+            job = await session.get(JobDescription, plan.job_id)
+            
+            from sqlalchemy.future import select
+            res = await session.execute(select(CanonicalProfile).where(CanonicalProfile.master_resume_id == plan.master_resume_id))
+            profile = res.scalar_one_or_none()
+            
+            if not job or not profile:
+                plan.status = "failed"
+                await session.commit()
+                return
+
+            try:
+                engine = MatchingEngine()
+                
+                # We need the parsed dictionary for the canonical profile and extracted_data for JD
+                result = await engine.generate_tailoring_plan(
+                    canonical_profile=profile.profile_json,
+                    job_description=job.extracted_data or {"raw_text": job.raw_text}
+                )
+                
+                plan.items = [item.model_dump() for item in result.items]
+                plan.status = "complete"
+                plan.metadata_obj = {
+                    "total_proposed": len(plan.items)
+                }
+                await session.commit()
+            except Exception as e:
+                plan.status = "failed"
+                await session.commit()
+                import logging
+                logging.error(f"Failed to generate tailoring plan: {e}")
+
+    asyncio.run(_generate())
+    return {"status": "complete", "plan_id": plan_id}
+
