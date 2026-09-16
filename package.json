@@ -1,0 +1,26 @@
+{
+  "name": "career-compiler",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-Powered Resume Engineering and ATS Evaluation Platform",
+  "scripts": {
+    "dev:web": "pnpm --filter @career-compiler/web dev",
+    "build:web": "pnpm --filter @career-compiler/web build",
+    "lint": "pnpm --filter @career-compiler/web lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "unrs-resolver@1.12.2",
+      "unrs-resolver",
+      "@next/swc-darwin-x64",
+      "sharp"
+    ]
+  }
+}

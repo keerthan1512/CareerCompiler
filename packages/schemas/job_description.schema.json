@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://careercompiler.dev/schemas/job_description.schema.json",
+  "title": "JobDescription",
+  "description": "Normalized representation of an ingested job description (Phase 2)",
+  "type": "object",
+  "required": ["id", "raw_text", "extracted"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "raw_text": { "type": "string" },
+    "source_url": { "type": "string", "format": "uri" },
+    "extracted": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "company": { "type": "string" },
+        "seniority": { "type": "string", "enum": ["intern", "junior", "mid", "senior", "lead", "principal", "staff", "unknown"] },
+        "domain": { "type": "string" },
+        "location": { "type": "string" },
+        "employment_type": { "type": "string", "enum": ["full-time", "part-time", "contract", "internship", "unknown"] },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "normalized": { "type": "string" },
+              "required": { "type": "boolean" },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          }
+        },
+        "responsibilities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "text": { "type": "string" },
+              "category": { "type": "string" },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          }
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "text": { "type": "string" },
+              "type": { "type": "string", "enum": ["must-have", "nice-to-have", "unknown"] },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          }
+        }
+      }
+    },
+    "normalized_requirements": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "analyzed_at": { "type": "string", "format": "date-time" },
+        "analyzer_version": { "type": "string" }
+      }
+    }
+  }
+}

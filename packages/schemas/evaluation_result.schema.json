@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://careercompiler.dev/schemas/evaluation_result.schema.json",
+  "title": "EvaluationResult",
+  "description": "ATS evaluation and job match scoring result (Phase 5)",
+  "type": "object",
+  "required": ["id", "variant_id", "scores", "issues", "recommendations", "methodology_version"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "variant_id": { "type": "string", "format": "uuid" },
+    "scores": {
+      "type": "object",
+      "required": ["parsing_compatibility", "job_match", "grounding", "overall"],
+      "properties": {
+        "parsing_compatibility": {
+          "type": "object",
+          "properties": {
+            "score": { "type": "number", "minimum": 0, "maximum": 100 },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+            "breakdown": { "type": "object" }
+          }
+        },
+        "job_match": {
+          "type": "object",
+          "properties": {
+            "score": { "type": "number", "minimum": 0, "maximum": 100 },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+            "keyword_overlap": { "type": "number" },
+            "semantic_similarity": { "type": "number" }
+          }
+        },
+        "grounding": {
+          "type": "object",
+          "properties": {
+            "score": { "type": "number", "minimum": 0, "maximum": 100 },
+            "grounded_claims": { "type": "integer" },
+            "total_claims": { "type": "integer" }
+          }
+        },
+        "overall": {
+          "type": "object",
+          "properties": {
+            "score": { "type": "number", "minimum": 0, "maximum": 100 },
+            "formula": { "type": "string", "description": "e.g. 0.35*Parsing + 0.40*JobMatch + 0.25*Grounding" }
+          }
+        }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "type": { "type": "string", "enum": ["ats_risk", "formatting", "gap", "grounding"] },
+          "severity": { "type": "string", "enum": ["critical", "warning", "info"] },
+          "description": { "type": "string" },
+          "recommendation": { "type": "string" }
+        }
+      }
+    },
+    "recommendations": { "type": "array", "items": { "type": "string" } },
+    "methodology_version": { "type": "string" },
+    "disclaimer": {
+      "type": "string",
+      "description": "Must state this is an estimated CareerCompiler evaluation, not an official vendor score"
+    },
+    "evaluated_at": { "type": "string", "format": "date-time" }
+  }
+}

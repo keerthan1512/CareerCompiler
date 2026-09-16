@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=70.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "career-compiler-api"
+version = "0.1.0"
+description = "CareerCompiler FastAPI backend"
+requires-python = ">=3.12"
+dependencies = [
+    # Web framework
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27.0",
+
+    # Database
+    "sqlalchemy[asyncio]>=2.0.0",
+    "asyncpg>=0.29.0",
+    "alembic>=1.13.0",
+
+    # Settings
+    "pydantic>=2.8.0",
+    "pydantic-settings>=2.4.0",
+
+    # Auth
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+
+    # Async
+    "aiofiles>=24.1.0",
+
+    # Queue
+    "celery[redis]>=5.4.0",
+    "redis>=5.0.0",
+
+    # File hashing
+    "aiofiles>=24.1.0",
+
+    # Internal packages (editable installs)
+    "career-compiler-resume-parser",
+    "career-compiler-llm-client",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+    "httpx>=0.27.0",  # for TestClient
+    "anyio>=4.4.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -1,0 +1,66 @@
+\documentclass[11pt,a4paper,sans]{moderncv}
+\moderncvstyle{banking}
+\moderncvcolor{blue}
+\usepackage[scale=0.75]{geometry}
+\usepackage{hyperref}
+\usepackage{fontawesome}
+
+% Personal data
+\name{Jane}{Doe}
+\title{Software Engineer}
+\address{San Francisco, CA}{}{}
+\phone[mobile]{+1-415-555-0123}
+\email{jane.doe@example.com}
+\social[linkedin]{janedoe}
+\social[github]{janedoe}
+\homepage{https://janedoe.dev}
+
+\begin{document}
+\makecvtitle
+
+\section{Summary}
+\cvitem{}{Experienced software engineer with 5+ years building scalable backend systems and APIs. Passionate about distributed systems, data engineering, and developer tooling.}
+
+\section{Experience}
+\cventry{Jan 2022 -- Present}{Senior Software Engineer}{Acme Corp}{San Francisco, CA}{}{
+  \begin{itemize}
+    \item Designed and built a distributed event-streaming platform using Apache Kafka and Python, processing 10M+ events per day
+    \item Reduced API latency by 45\% by implementing Redis caching layer and query optimization
+    \item Led a team of 4 engineers to deliver a greenfield microservices migration on schedule
+    \item Established CI/CD pipelines using GitHub Actions, reducing deployment time from 2 hours to 15 minutes
+  \end{itemize}
+}
+
+\cventry{Jun 2019 -- Dec 2021}{Software Engineer}{Beta Technologies}{New York, NY}{}{
+  \begin{itemize}
+    \item Built RESTful APIs using FastAPI and PostgreSQL serving 500K+ daily active users
+    \item Implemented ML-based recommendation engine using PyTorch, improving user engagement by 30\%
+    \item Migrated legacy monolith to containerized microservices using Docker and Kubernetes
+    \item Collaborated with product and design teams using Agile/Scrum methodology
+  \end{itemize}
+}
+
+\section{Education}
+\cventry{Aug 2015 -- May 2019}{B.S. Computer Science}{University of California, Berkeley}{Berkeley, CA}{}{}
+
+\section{Projects}
+\cventry{2022 -- 2023}{OpenResume}{Personal Project}{}{}{
+  \begin{itemize}
+    \item Built an open-source resume builder used by 5000+ developers
+    \item Implemented real-time collaboration using WebSockets and CRDTs
+    \item Tech stack: React, TypeScript, Node.js, PostgreSQL
+  \end{itemize}
+}
+
+\section{Skills}
+\cvitem{Languages}{Python, TypeScript, Go, SQL, Bash}
+\cvitem{Frameworks}{FastAPI, React, Node.js, Django, PyTorch}
+\cvitem{Infrastructure}{AWS, GCP, Docker, Kubernetes, Terraform}
+\cvitem{Databases}{PostgreSQL, Redis, MongoDB, Elasticsearch}
+\cvitem{Tools}{Git, GitHub Actions, Grafana, Prometheus, Kafka}
+
+\section{Certifications}
+\cvitem{2023}{AWS Certified Solutions Architect – Associate}
+\cvitem{2022}{Certified Kubernetes Administrator (CKA)}
+
+\end{document}

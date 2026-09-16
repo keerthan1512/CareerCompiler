@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://careercompiler.dev/schemas/canonical_profile.schema.json",
+  "title": "CanonicalProfile",
+  "description": "Structured representation of a master LaTeX resume with source references",
+  "type": "object",
+  "required": ["resume_id", "parser_version", "contact", "sections", "skills", "template", "metadata"],
+  "properties": {
+    "resume_id": { "type": "string", "format": "uuid" },
+    "parser_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "contact": {
+      "type": "object",
+      "properties": {
+        "name": { "$ref": "#/definitions/SourcedField" },
+        "email": { "$ref": "#/definitions/SourcedField" },
+        "phone": { "$ref": "#/definitions/SourcedField" },
+        "linkedin": { "$ref": "#/definitions/SourcedField" },
+        "github": { "$ref": "#/definitions/SourcedField" },
+        "website": { "$ref": "#/definitions/SourcedField" },
+        "location": { "$ref": "#/definitions/SourcedField" }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/Section" }
+    },
+    "skills": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/SkillGroup" }
+    },
+    "template": {
+      "type": "object",
+      "properties": {
+        "document_class": { "type": "string" },
+        "packages": { "type": "array", "items": { "type": "string" } },
+        "detected_format": { "type": "string", "enum": ["moderncv", "awesome-cv", "custom", "unknown"] }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "parsed_at": { "type": "string", "format": "date-time" },
+        "total_bullets": { "type": "integer" },
+        "total_sections": { "type": "integer" },
+        "total_skills": { "type": "integer" },
+        "source_file": { "type": "string" }
+      }
+    }
+  },
+  "definitions": {
+    "SourceRef": {
+      "type": "object",
+      "required": ["file", "line_start", "line_end"],
+      "properties": {
+        "file": { "type": "string" },
+        "line_start": { "type": "integer", "minimum": 1 },
+        "line_end": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "SourcedField": {
+      "type": "object",
+      "properties": {
+        "value": { "type": "string" },
+        "source_ref": { "$ref": "#/definitions/SourceRef" }
+      }
+    },
+    "Bullet": {
+      "type": "object",
+      "required": ["id", "text", "source_ref"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "text": { "type": "string" },
+        "source_ref": { "$ref": "#/definitions/SourceRef" }
+      }
+    },
+    "Entry": {
+      "type": "object",
+      "required": ["id", "source_ref"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "title": { "type": "string" },
+        "organization": { "type": "string" },
+        "location": { "type": "string" },
+        "dates": {
+          "type": "object",
+          "properties": {
+            "start": { "type": "string" },
+            "end": { "type": "string" },
+            "raw": { "type": "string" }
+          }
+        },
+        "source_ref": { "$ref": "#/definitions/SourceRef" },
+        "bullets": { "type": "array", "items": { "$ref": "#/definitions/Bullet" } }
+      }
+    },
+    "Section": {
+      "type": "object",
+      "required": ["id", "name", "normalized_name", "source_ref"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "normalized_name": {
+          "type": "string",
+          "enum": ["experience", "education", "skills", "projects", "publications", "awards", "summary", "certifications", "languages", "volunteering", "interests", "other"]
+        },
+        "source_ref": { "$ref": "#/definitions/SourceRef" },
+        "entries": { "type": "array", "items": { "$ref": "#/definitions/Entry" } }
+      }
+    },
+    "SkillItem": {
+      "type": "object",
+      "required": ["name", "normalized"],
+      "properties": {
+        "name": { "type": "string" },
+        "normalized": { "type": "string" },
+        "source_ref": { "$ref": "#/definitions/SourceRef" }
+      }
+    },
+    "SkillGroup": {
+      "type": "object",
+      "required": ["id", "items"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "category": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/definitions/SkillItem" } },
+        "source_ref": { "$ref": "#/definitions/SourceRef" }
+      }
+    }
+  }
+}

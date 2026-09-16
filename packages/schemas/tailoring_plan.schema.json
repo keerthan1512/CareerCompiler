@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://careercompiler.dev/schemas/tailoring_plan.schema.json",
+  "title": "TailoringPlan",
+  "description": "Ordered list of AI-proposed resume changes for user review (Phase 3)",
+  "type": "object",
+  "required": ["id", "job_id", "master_resume_id", "items", "metadata"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "job_id": { "type": "string", "format": "uuid" },
+    "master_resume_id": { "type": "string", "format": "uuid" },
+    "mode": { "type": "string", "enum": ["quick", "review"], "description": "quick=AI delivers final; review=per-change approval" },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "requirement_id", "evidence_id", "change_type", "original_text", "proposed_text", "rationale", "status"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "requirement_id": { "type": "string", "format": "uuid" },
+          "evidence_id": { "type": "string", "format": "uuid" },
+          "change_type": { "type": "string", "enum": ["reword_bullet", "reorder_bullet", "add_keyword", "add_bullet", "remove_bullet"] },
+          "original_text": { "type": "string" },
+          "proposed_text": { "type": "string" },
+          "rationale": { "type": "string", "description": "Human-readable explanation of why this change is proposed" },
+          "evidence_text": { "type": "string", "description": "The source resume evidence grounding this proposal" },
+          "source_ref": {
+            "type": "object",
+            "properties": {
+              "file": { "type": "string" },
+              "line_start": { "type": "integer" },
+              "line_end": { "type": "integer" }
+            }
+          },
+          "status": { "type": "string", "enum": ["pending", "approved", "rejected", "edited"] },
+          "user_edited_text": { "type": "string", "description": "Set if user edited the proposed text" },
+          "source": { "type": "string", "enum": ["ai", "user"], "description": "Who made this change" }
+        }
+      }
+    },
+    "iteration": { "type": "integer", "minimum": 1, "maximum": 3, "description": "Optimization iteration (capped at 3 per FR-022)" },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created_at": { "type": "string", "format": "date-time" },
+        "planner_version": { "type": "string" },
+        "total_proposed": { "type": "integer" },
+        "total_approved": { "type": "integer" },
+        "total_rejected": { "type": "integer" }
+      }
+    }
+  }
+}
