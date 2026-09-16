@@ -14,7 +14,7 @@ DB_URL="${DATABASE_URL:-postgresql+asyncpg://ccuser:ccpassword@localhost:5432/ca
 # Convert to psql-compatible URL
 PSQL_URL="${DB_URL/postgresql+asyncpg/postgresql}"
 
-DEV_USER_ID="${DEV_USER_ID:-dev-user-00000000-0000-0000-0000-000000000001}"
+DEV_USER_ID="${DEV_USER_ID:-11111111-1111-1111-1111-111111111111}"
 DEV_USER_EMAIL="dev@careercompiler.local"
 DEV_USER_NAME="Dev User"
 

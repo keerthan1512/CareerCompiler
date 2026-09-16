@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
-from .routers import master_resumes, jobs
+from .routers import master_resumes, jobs, job_descriptions
 
 settings = get_settings()
 
@@ -82,6 +82,7 @@ app.add_middleware(
 API_PREFIX = "/api/v1"
 
 app.include_router(master_resumes.router, prefix=API_PREFIX)
+app.include_router(job_descriptions.router, prefix=API_PREFIX)
 app.include_router(jobs.router, prefix=API_PREFIX)
 
 

@@ -19,3 +19,4 @@ anyio>=4.4.0
 
 -e ../../services/resume-parser
 -e ../../packages/llm-client
+-e ../../services/job-intelligence

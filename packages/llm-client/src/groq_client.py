@@ -83,6 +83,12 @@ class GroqClient:
     @classmethod
     def from_env(cls) -> "GroqClient":
         """Create client from environment variables."""
+        try:
+            from dotenv import load_dotenv, find_dotenv
+            load_dotenv(find_dotenv())
+        except ImportError:
+            pass
+            
         api_key = os.environ.get("GROQ_API_KEY")
         if not api_key:
             raise EnvironmentError("GROQ_API_KEY environment variable is not set")
@@ -168,7 +174,8 @@ class GroqClient:
 
         try:
             response = llm.invoke(messages)
-            return parser.parse(response.content)
+            parsed_dict = parser.parse(response.content)
+            return schema(**parsed_dict)
         except Exception as exc:
             logger.error("Groq structured chat failed: %s", exc)
             raise LLMError(f"Structured LLM call failed: {exc}") from exc
@@ -190,7 +197,8 @@ class GroqClient:
 
         try:
             response = await llm.ainvoke(messages)
-            return parser.parse(response.content)
+            parsed_dict = parser.parse(response.content)
+            return schema(**parsed_dict)
         except Exception as exc:
             logger.error("Groq async structured chat failed: %s", exc)
             raise LLMError(f"Async structured LLM call failed: {exc}") from exc

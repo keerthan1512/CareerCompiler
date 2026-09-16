@@ -20,6 +20,7 @@ from src.models.master_resume import MasterResume  # noqa: F401
 from src.models.canonical_profile import CanonicalProfile  # noqa: F401
 from src.models.audit_log import AuditLog  # noqa: F401
 from src.models.parse_job import ParseJob  # noqa: F401
+from src.models.job_description import JobDescription  # noqa: F401
 
 config = context.config
 

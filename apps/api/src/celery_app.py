@@ -26,6 +26,7 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,  # fair task distribution
     task_routes={
         "src.tasks.parse_resume": {"queue": "parsing"},
+        "src.tasks.analyze_job": {"queue": "parsing"},
         "src.tasks.match_requirements": {"queue": "matching"},
         "src.tasks.compile_latex": {"queue": "compilation"},
         "src.tasks.evaluate_resume": {"queue": "evaluation"},
@@ -44,3 +45,39 @@ def task_parse_resume(self, resume_id: str, user_id: str):
     """
     # TODO: Phase 3 — call parser service async from here
     return {"status": "stub", "resume_id": resume_id}
+
+@celery_app.task(name="src.tasks.analyze_job", bind=True, max_retries=3)
+def task_analyze_job(self, job_id: str, user_id: str):
+    """
+    Celery task: analyze a job description asynchronously.
+    Phase 2: This task will call the job_analyzer service.
+    """
+    import asyncio
+    from src.database import AsyncSessionLocal
+    from src.models.job_description import JobDescription
+    from src.models.parse_job import ParseJob
+    from datetime import datetime, timezone
+    
+    # We must run the async job analyzer in an event loop
+    async def _analyze():
+        from career_compiler_job_intelligence.analyzer import JobAnalyzer
+        async with AsyncSessionLocal() as session:
+            job = await session.get(JobDescription, job_id)
+            if not job:
+                return
+            
+            try:
+                analyzer = JobAnalyzer()
+                extracted = await analyzer.analyze(job.raw_text)
+                job.extracted_data = extracted.model_dump()
+                job.status = "complete"
+                await session.commit()
+            except Exception as e:
+                job.status = "failed"
+                await session.commit()
+                # Log error
+                import logging
+                logging.error(f"Failed to analyze job: {e}")
+
+    asyncio.run(_analyze())
+    return {"status": "complete", "job_id": job_id}
