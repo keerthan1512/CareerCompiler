@@ -6,8 +6,7 @@ Storage layout:
   uploads/
     {user_id}/
       {resume_id}/
-        main.tex          ← primary LaTeX file
-        assets/           ← .cls, .sty, .bib, images
+        main.pdf          ← primary PDF file
 """
 
 from __future__ import annotations
@@ -41,11 +40,11 @@ class FileStorage:
     def _assets_dir(self, user_id: str, resume_id: str) -> Path:
         return self._resume_dir(user_id, resume_id) / "assets"
 
-    async def save_tex(
-        self, user_id: str, resume_id: str, content: bytes, filename: str = "main.tex"
+    async def save_pdf(
+        self, user_id: str, resume_id: str, content: bytes, filename: str = "main.pdf"
     ) -> tuple[str, str]:
         """
-        Save the primary .tex file.
+        Save the primary .pdf file.
 
         Returns:
             (relative_path, sha256_checksum)
@@ -61,26 +60,8 @@ class FileStorage:
         relative_path = str(target.relative_to(self.base_dir))
         return relative_path, checksum
 
-    async def save_asset(
-        self, user_id: str, resume_id: str, content: bytes, filename: str
-    ) -> str:
-        """
-        Save an asset file (.cls, .sty, .bib, image).
-        Returns relative path.
-        """
-        assets_dir = self._assets_dir(user_id, resume_id)
-        assets_dir.mkdir(parents=True, exist_ok=True)
-
-        # Sanitize filename
-        safe_name = Path(filename).name
-        target = assets_dir / safe_name
-        async with aiofiles.open(target, "wb") as f:
-            await f.write(content)
-
-        return str(target.relative_to(self.base_dir))
-
-    async def read_tex(self, user_id: str, resume_id: str, filename: str = "main.tex") -> bytes:
-        """Read the primary .tex file content."""
+    async def read_pdf(self, user_id: str, resume_id: str, filename: str = "main.pdf") -> bytes:
+        """Read the primary .pdf file content."""
         target = self._resume_dir(user_id, resume_id) / filename
         if not target.exists():
             raise FileStorageError(f"File not found: {target}")

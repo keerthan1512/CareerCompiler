@@ -30,10 +30,6 @@ class MasterResume(Base):
         nullable=False,
         index=True,
     )
-    # Path to the primary .tex file in local storage (./uploads/{user_id}/{resume_id}/main.tex)
-    original_tex_path: Mapped[str] = mapped_column(String(500), nullable=False)
-    # List of asset paths (images, .cls, .sty, .bib) as JSON array
-    assets_paths: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
     # SHA-256 checksum of the primary .tex content
     checksum: Mapped[str] = mapped_column(String(64), nullable=False)
     # Extracted metadata: {document_class, packages, detected_format}

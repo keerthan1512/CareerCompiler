@@ -123,16 +123,10 @@ class MasterResumeDetailResponse(BaseModel):
     display_name: str
     checksum: str
     template_metadata: dict
-    assets_paths: list[str]
     created_at: datetime
     canonical_profile: Optional[CanonicalProfileResponse] = None
 
     model_config = {"from_attributes": True}
 
 
-class ReparseResponse(BaseModel):
-    """Response when triggering a re-parse."""
-    resume_id: uuid.UUID
-    job_id: uuid.UUID
-    status: str
-    message: str
+

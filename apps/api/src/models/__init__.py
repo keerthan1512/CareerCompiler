@@ -7,6 +7,7 @@ from .parse_job import ParseJob
 from .job_description import JobDescription
 from .match_result import MatchResult
 from .tailoring_plan import TailoringPlan
+from .compiled_resume import CompiledResume
 
 __all__ = [
     "User",
@@ -17,4 +18,5 @@ __all__ = [
     "JobDescription",
     "MatchResult",
     "TailoringPlan",
+    "CompiledResume",
 ]

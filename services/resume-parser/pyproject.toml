@@ -1,26 +1,13 @@
-[build-system]
-requires = ["setuptools>=70.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "career-compiler-resume-parser"
-version = "1.0.0"
-description = "LaTeX resume parser and canonical profile builder for CareerCompiler"
-requires-python = ">=3.12"
+name = "career_compiler_resume_parser"
+version = "0.1.0"
+description = "Extracts text from PDF and structures into CanonicalProfile"
 dependencies = [
-    "TexSoup>=0.3.1",
-    "pylatexenc>=2.10",
-    "pydantic>=2.8.0",
+    "PyPDF2",
+    "pydantic",
+    "career_compiler_job_intelligence"
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.23.0",
-]
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-dir]
-"" = "src"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

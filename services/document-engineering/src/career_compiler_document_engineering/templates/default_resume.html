@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Resume</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            line-height: 1.5;
+            margin: 0;
+            padding: 40px;
+            box-sizing: border-box;
+            background: #fff;
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .contact-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        h2 {
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            margin-top: 20px;
+        }
+        .job {
+            margin-bottom: 15px;
+        }
+        .job-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .job-meta {
+            font-size: 14px;
+            color: #555;
+            font-style: italic;
+        }
+        ul {
+            margin: 5px 0 0 20px;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>{{ profile.get('contact', {})['name']['value'] if profile.get('contact', {}) and profile.get('contact', {}).get('name') else 'John Doe' }}</h1>
+        <div class="contact-info">
+            {{ profile.get('contact', {})['email']['value'] if profile.get('contact', {}) and profile.get('contact', {}).get('email') else 'john@example.com' }} | 
+            {{ profile.get('contact', {})['phone']['value'] if profile.get('contact', {}) and profile.get('contact', {}).get('phone') else '(555) 555-5555' }}
+        </div>
+    </header>
+
+    <section>
+        <h2>Experience</h2>
+        {% set experience_section = profile.get('sections', []) | selectattr("normalized_name", "equalto", "experience") | list %}
+        {% if experience_section %}
+        {% for job in experience_section[0].get('entries', []) %}
+        <div class="job">
+            <div class="job-title">{{ job.get('title', 'Software Engineer') }} — {{ job.get('organization', 'Acme Corp') }}</div>
+            <div class="job-meta">{{ job.get('dates', {}).get('raw', '2020 - Present') }} | {{ job.get('location', 'Remote') }}</div>
+            <ul>
+                {% for highlight in job.get('bullets', []) %}
+                <li>{{ highlight }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </section>
+
+</body>
+</html>

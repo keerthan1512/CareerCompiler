@@ -37,14 +37,55 @@ celery_app.conf.update(
 # ── Task stubs (Phase 1 — actual logic runs synchronously in service layer) ───
 
 @celery_app.task(name="src.tasks.parse_resume", bind=True, max_retries=3)
-def task_parse_resume(self, resume_id: str, user_id: str):
+def task_parse_resume(self, resume_id: str, user_id: str, filename: str):
     """
-    Celery task: parse a master resume asynchronously.
-    Phase 1: logic runs synchronously in the router.
-    Phase 3+: this task will call run_parse_pipeline().
+    Celery task: parse a master resume asynchronously using PdfParser.
     """
-    # TODO: Phase 3 — call parser service async from here
-    return {"status": "stub", "resume_id": resume_id}
+    import asyncio
+    
+    async def _parse():
+        from src.config import get_settings
+        from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+        from sqlalchemy.orm import sessionmaker
+        engine = create_async_engine(get_settings().database_url)
+        AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        from src.models import MasterResume, CanonicalProfile
+        from src.services.file_storage import get_file_storage
+        from career_compiler_resume_parser.parser import PdfParser
+        import logging
+        
+        await engine.dispose()
+        
+        async with AsyncSessionLocal() as session:
+            resume = await session.get(MasterResume, resume_id)
+            if not resume:
+                return
+            
+            from sqlalchemy.future import select
+            res = await session.execute(select(CanonicalProfile).where(CanonicalProfile.master_resume_id == resume_id))
+            profile = res.scalar_one_or_none()
+            if not profile:
+                return
+                
+            try:
+                storage = get_file_storage()
+                pdf_bytes = await storage.read_pdf(user_id, resume_id, filename)
+                
+                parser = PdfParser()
+                parsed_json = await parser.parse(pdf_bytes, filename)
+                
+                profile.profile_json = parsed_json
+                resume.template_metadata = parsed_json.get("template", {})
+                profile.status = "complete"
+                await session.commit()
+            except Exception as e:
+                profile.status = "failed"
+                profile.error_message = str(e)
+                await session.commit()
+                logging.error(f"Failed to parse PDF resume: {e}")
+
+    asyncio.run(_parse())
+    return {"status": "complete", "resume_id": resume_id}
 
 @celery_app.task(name="src.tasks.analyze_job", bind=True, max_retries=3)
 def task_analyze_job(self, job_id: str, user_id: str):
@@ -61,6 +102,13 @@ def task_analyze_job(self, job_id: str, user_id: str):
     # We must run the async job analyzer in an event loop
     async def _analyze():
         from career_compiler_job_intelligence.analyzer import JobAnalyzer
+        from src.config import get_settings
+        from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+        from sqlalchemy.orm import sessionmaker
+        engine = create_async_engine(get_settings().database_url)
+        AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        await engine.dispose()
+        
         async with AsyncSessionLocal() as session:
             job = await session.get(JobDescription, job_id)
             if not job:
@@ -94,6 +142,13 @@ def task_generate_tailoring_plan(self, plan_id: str):
     from career_compiler_matching_engine.engine import MatchingEngine
     
     async def _generate():
+        from src.config import get_settings
+        from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+        from sqlalchemy.orm import sessionmaker
+        engine = create_async_engine(get_settings().database_url)
+        AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        await engine.dispose()
+        
         async with AsyncSessionLocal() as session:
             plan = await session.get(TailoringPlan, plan_id)
             if not plan:
@@ -134,3 +189,103 @@ def task_generate_tailoring_plan(self, plan_id: str):
     asyncio.run(_generate())
     return {"status": "complete", "plan_id": plan_id}
 
+
+@celery_app.task(name="src.tasks.compile_latex", bind=True, max_retries=3)
+def task_compile_latex(self, document_id: str):
+    """
+    Background task to inject tailoring changes and compile LaTeX to PDF.
+    """
+    import asyncio
+    import logging
+    from src.database import AsyncSessionLocal
+    from src.models import CompiledResume, TailoringPlan, MasterResume
+    
+    logger = logging.getLogger(__name__)
+    from career_compiler_document_engineering.templater import apply_tailoring_plan
+    from career_compiler_document_engineering.compiler import HtmlToPdfCompiler
+    from career_compiler_document_engineering.validator import DocumentValidator
+    from src.config import get_settings
+    
+    settings = get_settings()
+    
+    async def _compile():
+        from src.config import get_settings
+        from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+        from sqlalchemy.orm import sessionmaker
+        engine = create_async_engine(get_settings().database_url)
+        AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        await engine.dispose()
+        
+        async with AsyncSessionLocal() as session:
+            doc = await session.get(CompiledResume, document_id)
+            if not doc:
+                return
+                
+            plan = await session.get(TailoringPlan, doc.tailoring_plan_id)
+            if not plan:
+                doc.status = "failed"
+                await session.commit()
+                return
+                
+            master = await session.get(MasterResume, plan.master_resume_id)
+            if not master:
+                doc.status = "failed"
+                await session.commit()
+                return
+                
+            try:
+                # 1. Templater
+                doc.status = "running"
+                await session.commit()
+                
+                # Fetch CanonicalProfile JSON instead of raw tex
+                from src.models import CanonicalProfile
+                from sqlalchemy.future import select
+                
+                stmt = select(CanonicalProfile).where(CanonicalProfile.master_resume_id == master.id)
+                res = await session.execute(stmt)
+                profile = res.scalar_one_or_none()
+                
+                if not profile or not profile.profile_json:
+                    raise Exception("Master resume canonical profile not found or empty.")
+                
+                # Apply changes to JSON
+                modified_json = apply_tailoring_plan(profile.profile_json, plan.items or [])
+                
+                # Render HTML
+                from career_compiler_document_engineering.templater import render_html
+                new_html = render_html(modified_json)
+                doc.latex_content = new_html # Reuse this field for HTML for now
+                
+                # 2. Compiler
+                compiler = HtmlToPdfCompiler(upload_dir=settings.upload_dir)
+                comp_result = compiler.compile(new_html)
+                
+                # 3. Validator
+                val = DocumentValidator()
+                log_path = comp_result.get("log_path")
+                validation_res = {}
+                if log_path:
+                    with open(log_path, "r", encoding="utf-8") as f:
+                        log_content = f.read()
+                        validation_res = val.validate(log_content)
+                
+                doc.validation_results = validation_res
+                
+                if comp_result["status"] == "success":
+                    doc.status = "complete"
+                    doc.pdf_file_path = comp_result["pdf_path"]
+                else:
+                    doc.status = "failed"
+                    # Include error in validation results
+                    doc.validation_results["compilation_error"] = comp_result.get("error")
+                    
+                await session.commit()
+                
+            except Exception as e:
+                logger.exception(f"Failed to compile LaTeX for doc {document_id}")
+                doc.status = "failed"
+                await session.commit()
+
+    asyncio.run(_compile())
+    return {"status": "complete", "document_id": document_id}
