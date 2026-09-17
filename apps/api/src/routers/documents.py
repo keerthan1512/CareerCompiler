@@ -11,21 +11,26 @@ from ..celery_app import task_compile_latex
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
+from pydantic import BaseModel
+
+class CompileRequest(BaseModel):
+    tailoring_plan_id: uuid.UUID
+
 @router.post("/compile", status_code=202)
 async def compile_document(
-    tailoring_plan_id: uuid.UUID,
+    req: CompileRequest,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
     """
     FR-014, FR-015: Triggers a sandboxed compilation task for a given tailoring plan.
     """
-    plan = await db.get(TailoringPlan, tailoring_plan_id)
+    plan = await db.get(TailoringPlan, req.tailoring_plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="TailoringPlan not found")
         
     doc = CompiledResume(
-        tailoring_plan_id=tailoring_plan_id,
+        tailoring_plan_id=req.tailoring_plan_id,
         user_id=str(user.id),
         latex_content="", # populated by task
         status="pending"
